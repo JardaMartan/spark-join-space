@@ -22,6 +22,8 @@ import spark_client
 
 from datetime import datetime, timedelta
 
+import config as cfg
+
 # disable warnings about using certificate verification
 requests.packages.urllib3.disable_warnings()
 
@@ -33,31 +35,6 @@ ideal_result = 50
 # Create an instance of Flask
 app = Flask(__name__, static_url_path="/static")
 app.config["DEBUG"] = True
-
-#
-# this part is for room subscription
-# you need to create an "integration" on developer.ciscospark.com
-# https://developer.ciscospark.com/apps.html
-#
-# join_client_id = "enter_your_app_client_id_here"
-join_client_id = "C7cd93b9f7e25ee9153c7956202a5f9ccbb94618cf751aa227643b7773d474736"
-# join_secret = "enter_your_app_client_secret_here"
-join_secret = "1db125a382a296247bd0a4efda57194af06c970f97f69031b3f39179b2d46d83"
-
-#
-# this part is for the other Spark integration responsible for user's e-mail address
-#
-# on_behalf_client_id = "enter_your_app_client_id_here"
-on_behalf_client_id= "Cac654d02ce38607ef20f0c7d02daa924ed4644ea940780ea336a33bfa7bef7ba"
-# on_behalf_secret = "enter_your_app_client_secret_here"
-on_behalf_secret = "e88a0b8f0e7a92972403117eb8d84ba5bc18c56dbb5b8443b39c7e3d7de7c9b8"
-
-#
-# room id, you can look it up at https://developer.ciscospark.com/endpoint-rooms-get.html
-#
-# room_id = "enter_your_room_id_here"  # ID for "TechClub2017 Spark Demo"
-
-event_rooms = {"tc2017": "Y2lzY29zcGFyazovL3VzL1JPT00vNjZlNWY0YjAtM2MwYy0xMWU3LWFjN2EtNjllYTA0OTFjZThm"}
 
 #
 # access & refresh token object for ZODB storage
@@ -147,7 +124,26 @@ def set_me(event_name, access_token):
     transaction.commit()
 
 def renew_auth_token(event_name):
-    pass
+    token_db = get_event_db(event_name)["tokens"]
+    owner_token_data = token_db[0]
+    app.logger.debug("Original Access token: {}, expires: {}, Refresh token: {}, expires: {}".format(owner_token_data.access_token, owner_token_data.at_expires_on, owner_token_data.refresh_token, owner_token_data.rt_expires_on))        
+
+#     app.logger.debug("data: {}".format(owner_token_data.row()))
+
+    access_info = spark_client.post_refresh_token(cfg.on_behalf_client_id, cfg.on_behalf_secret, owner_token_data.refresh_token)
+    app.logger.debug("Access info: {}".format(access_info))
+    
+    if access_info["status_code"] != 200:
+        return None
+
+    owner_token_data = Token_data(access_info["access_token"], access_info["expires_in"], access_info["refresh_token"], access_info["refresh_token_expires_in"])
+    app.logger.debug("New Access token: {}, expires: {}, Refresh token: {}, expires: {}".format(owner_token_data.access_token, owner_token_data.at_expires_on, owner_token_data.refresh_token, owner_token_data.rt_expires_on))        
+# open the database
+    token_db[0] = owner_token_data
+    transaction.commit()
+    
+    return owner_token_data
+
 #
 # generate authentication string
 #
@@ -198,7 +194,7 @@ def webhook(event_name):
 
 @app.route("/owner-auth-redirect/<event_name>")
 def owner_auth_redirect(event_name):
-    if event_name not in event_rooms.keys():
+    if event_name not in cfg.event_rooms.keys():
         return u"Unknown event \"{}\"".format(event_name)
     
     myUrlParts = urlparse(request.url)
@@ -209,7 +205,7 @@ def owner_auth_redirect(event_name):
     redirect_uri = quote(full_redirect_uri, safe="")
     scope = ["spark:people_read", "spark:rooms_read", "spark:memberships_write", "spark:kms"]
     scope_uri = quote(" ".join(scope), safe="")
-    owner_url = "https://api.ciscospark.com/v1/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}".format(on_behalf_client_id, redirect_uri, scope_uri, event_name)
+    owner_url = "https://api.ciscospark.com/v1/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}".format(cfg.on_behalf_client_id, redirect_uri, scope_uri, event_name)
 
     return redirect(owner_url)
 
@@ -222,7 +218,7 @@ def owner_auth():
     full_redirect_uri = myUrlParts.scheme + "://" + myUrlParts.netloc + url_for("owner_auth")
     app.logger.debug("Redirect URI: {}".format(full_redirect_uri))
     
-    access_info = spark_client.post_access_token(on_behalf_client_id, on_behalf_secret, input_code, full_redirect_uri)
+    access_info = spark_client.post_access_token(cfg.on_behalf_client_id, cfg.on_behalf_secret, input_code, full_redirect_uri)
     app.logger.debug("Access info: {}".format(access_info))
     
     if access_info["status_code"] != 200:
@@ -247,24 +243,9 @@ def owner_auth():
 def token_renew(event_name):
     token_db = get_event_db(event_name)["tokens"]
     owner_token_data = token_db[0]
-    app.logger.debug("Original Access token: {}, expires: {}, Refresh token: {}, expires: {}".format(owner_token_data.access_token, owner_token_data.at_expires_on, owner_token_data.refresh_token, owner_token_data.rt_expires_on))        
-
     token_data_dict = [owner_token_data.row()]
     
-#     app.logger.debug("data: {}".format(owner_token_data.row()))
-
-    access_info = spark_client.post_refresh_token(on_behalf_client_id, on_behalf_secret, owner_token_data.refresh_token)
-    app.logger.debug("Access info: {}".format(access_info))
-    
-    if access_info["status_code"] != 200:
-        return "Failed"
-
-    owner_token_data = Token_data(access_info["access_token"], access_info["expires_in"], access_info["refresh_token"], access_info["refresh_token_expires_in"])
-    app.logger.debug("New Access token: {}, expires: {}, Refresh token: {}, expires: {}".format(owner_token_data.access_token, owner_token_data.at_expires_on, owner_token_data.refresh_token, owner_token_data.rt_expires_on))        
-# open the database
-    token_db[0] = owner_token_data
-    transaction.commit()
-
+    owner_token_data = renew_auth_token(event_name)
     token_data_dict.append(owner_token_data.row())
 
     table = TokenTable(token_data_dict)
@@ -274,7 +255,7 @@ def token_renew(event_name):
 
 @app.route("/join-redirect/<event_name>", methods=["GET"])
 def join_redirect(event_name):
-    if event_name not in event_rooms.keys():
+    if event_name not in cfg.event_rooms.keys():
         return u"Unknown event \"{}\"".format(event_name)
 
     myUrlParts = urlparse(request.url)
@@ -285,7 +266,7 @@ def join_redirect(event_name):
     redirect_uri = quote(full_redirect_uri, safe="")
     scope = ["spark:people_read", "spark:kms"]
     scope_uri = quote(" ".join(scope), safe="")
-    join_url = "https://api.ciscospark.com/v1/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}".format(join_client_id, redirect_uri, scope_uri, event_name)
+    join_url = "https://api.ciscospark.com/v1/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}".format(cfg.join_client_id, redirect_uri, scope_uri, event_name)
 
     return redirect(join_url)
 
@@ -294,14 +275,14 @@ def join():
     input_code = request.args.get("code")
     event_name = request.args.get("state")
     app.logger.debug("Join request, event name derived from \"state\": {}, code: {}".format(event_name, input_code))
-    if event_name not in event_rooms.keys():
+    if event_name not in cfg.event_rooms.keys():
         return u"Unknown event \"{}\"".format(event_name)
 
     myUrlParts = urlparse(request.url)
     full_redirect_uri = myUrlParts.scheme + "://" + myUrlParts.netloc + url_for("join")
     app.logger.debug("Redirect URI: {}".format(full_redirect_uri))
     
-    access_info = spark_client.post_access_token(join_client_id, join_secret, input_code, full_redirect_uri)
+    access_info = spark_client.post_access_token(cfg.join_client_id, cfg.join_secret, input_code, full_redirect_uri)
     app.logger.debug("Access info: {}".format(access_info))
     
     if access_info["status_code"] == 200:
@@ -309,7 +290,7 @@ def join():
         app.logger.debug("Got access token: {}".format(user_at))
         user_info = spark_client.get_me("Bearer " + user_at)
         if user_info["status_code"] == 200:
-            room_id = event_rooms[event_name]
+            room_id = cfg.event_rooms[event_name]
             app.logger.info(u"Request to join the room {} from: {}, user id: {}".format(room_id, user_info, user_info["id"]))
             join_resp = spark_client.post_membership(auth_token(event_name), room_id, personId=user_info["id"])
             app.logger.debug("Join room response: {}".format(join_resp))

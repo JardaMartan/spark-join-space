@@ -38,17 +38,16 @@ Login to [Spark Developer Site](http://developer.ciscospark.com) and under [My A
 
 | Application | Redirect URI(s) | Scopes  |
 | --- | --- | --- |
-| Access Token Pass | http://<your_server>:5000/owner-auth | spark:people\_read spark:rooms\_read spark:memberships_write |
-| Join Space | http://<your_server>:5000/join | spark:people\_read |
+| Access Token Pass | `http://<your_server>:5000/owner-auth` | spark:people\_read spark:rooms\_read spark:memberships_write |
+| Join Space | `http://<your_server>:5000/join` | spark:people\_read |
 
 
-Copy the **Client ID** and **Client Secret** from both applications. You will need to paste them to `flask_bot.py`. Client Secret gets displayed only when you create the application but you can re-generate it later as well. Just don't forget that by re-generating you invalidate the previous secret.
+Copy the **Client ID** and **Client Secret** from both applications. You will need to paste them to `flask_bot.py`. **Client Secret** gets displayed only when you create the application but you can re-generate it later as well. Just don't forget that by re-generating you invalidate the previous secret.
 
-512x512 icon is a mandatory parameter, use this for example: http://logok.org/wp-content/uploads/2014/05/Cisco-logo-1024x768.png.
+512x512 icon is a mandatory parameter, you may try using this one: http://logok.org/wp-content/uploads/2014/05/Cisco-logo-1024x768.png.
 
-
-### Edit the flask_bot.py
-Get the room id to which you want to subscribe the attendees using https://developer.ciscospark.com/endpoint-rooms-get.html. Modify the `event_rooms` variable in `flask_bot.py` accordingly. Paste the Client ID and Client Secret from **Access Token Pass** to `on_behalf_client_id` and `on_behalf_client_secret` variables in `flask_bot.py`. Paste the Client ID and Client Secret from **Join Space** to `join_client_id` and `join_client_secret` in `flask_bot.py`.
+### Create config.py
+Get the room id to which you want to subscribe the attendees using https://developer.ciscospark.com/endpoint-rooms-get.html. Copy the `config-sample.py` to `config.py` and open it for editing. Paste the **Client ID** and **Client Secret** from **Join Space** to `join_client_id` and `join_client_secret` variables. Paste the **Client ID** and **Client Secret** from **Access Token Pass** to `on_behalf_client_id` and `on_behalf_client_secret` variables. Modify the `event_rooms` variable: add there a list of your event names and related room ids.
 
 ### Start the application script
 The application is written in python version 3.x for [Flask](http://flask.pocoo.org) WSGI framework. You can either run it directly by `python3 flask_bot.py` or using [Tornado](http://flask.pocoo.org/snippets/78/) by running `cyclone.py` script. The application listens on HTTP port 5000. The application needs to run on a public IPv4 address. You either need to host it on some publicly accessible server or using some tunnelling technique like [ngrok](http://ngrok.com).
