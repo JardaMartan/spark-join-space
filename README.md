@@ -50,9 +50,18 @@ Copy the **Client ID** and **Client Secret** from both applications. You will ne
 Get the room id to which you want to subscribe the attendees using https://developer.ciscospark.com/endpoint-rooms-get.html. Copy the `config-sample.py` to `config.py` and open it for editing. Paste the **Client ID** and **Client Secret** from **Join Space** to `join_client_id` and `join_client_secret` variables. Paste the **Client ID** and **Client Secret** from **Access Token Pass** to `on_behalf_client_id` and `on_behalf_client_secret` variables. Modify the `event_rooms` variable: add there a list of your event names and related room ids.
 
 ### Start the application script
-The application is written in python version 3.x for [Flask](http://flask.pocoo.org) WSGI framework. You can either run it directly by `python3 flask_bot.py` or using [Tornado](http://flask.pocoo.org/snippets/78/) by running `cyclone.py` script. The application listens on HTTP port 5000. The application needs to run on a public IPv4 address. You either need to host it on some publicly accessible server or using some tunnelling technique like [ngrok](http://ngrok.com).
+The application is written in python version 3.x for [Flask](http://flask.pocoo.org) WSGI framework. You can either run it directly by `python3 flask_bot.py` or using [Tornado](http://flask.pocoo.org/snippets/78/) by running `python3 cyclone.py` script. The application listens on HTTP port 5000. The application needs to run on a public IPv4 address. You either need to host it on some publicly accessible server or using some tunnelling technique like [ngrok](http://ngrok.com).
 
 ### Test it
 Open `http://<your_server>:5000/owner-auth-redirect/tc2017` (`tc2017` is the my testing event name, use your own name a room id as set in previous step). After passing through the authentication process you should get a web page with access and refresh tokens and their expiration times.
 
 In another browser open `http://<your_server>:5000/join-redirect/tc2017`. Enter an attendee's Spark credentials (or try creating a new Spark registration). After passing through the authentication you should be redirected in the web browser to the Spark space which you've just joined. In case of failure you will be redirected to http://www.cisco.com.
+
+## File list
+`flask_bot.py` - main application
+`cyclone.py` - wrapper for Tornado
+`config-sample.py` - sample configuration file
+`requests.py` - modified Requests, acts on more HTTP responses from Spark cloud
+`spark_client.py` - Spark client library
+`static` - folder with static HTML and CSS files for Flask
+`templates` - HTML rendering templates for Flask
