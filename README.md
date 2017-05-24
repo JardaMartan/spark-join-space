@@ -33,7 +33,7 @@ Additionally there are following URLs:
 [ZODB](http://zodb.org) is used for data storage (access and refresh token). In order to achieve parallel access the application needs to access the storage via network uzing [ZEO](http://www.zodb.org/en/latest/articles/ZODB2.html). Before running the application script, start ZEO (for example under `screen`) using `runzeo -f join_space.fs -a 127.0.0.1:5090`.
 
 ### Create Spark Integration
-Login to [Spark Developer Site](http://developer.ciscospark.com) and under [My Apps](https://developer.ciscospark.com/apps.html) create two new integrations. For example **Access Token Pass** and **Join Space**. **Access Token Pass** will be used for passing the identity of the user who will subscrine attendees to a space. **Join Space** will be used by attendees to join a space. Set following parameters:
+Login to [Spark Developer Site](http://developer.ciscospark.com) and under [My Apps](https://developer.ciscospark.com/apps.html) create two new integrations. For example **Access Token Pass** and **Join Space**. **Access Token Pass** will be used for passing the identity of the user who will subscribe attendees to a space. **Join Space** will be used by attendees to join a space. Set following parameters:
 
 
 | Application | Redirect URI(s) | Scopes  |
