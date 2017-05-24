@@ -59,9 +59,15 @@ In another browser open `http://<your_server>:5000/join-redirect/tc2017`. Enter 
 
 ## File list
 `flask_bot.py` - main application
+
 `cyclone.py` - wrapper for Tornado
+
 `config-sample.py` - sample configuration file
+
 `requests.py` - modified Requests, acts on more HTTP responses from Spark cloud
+
 `spark_client.py` - Spark client library
+
 `static` - folder with static HTML and CSS files for Flask
+
 `templates` - HTML rendering templates for Flask
