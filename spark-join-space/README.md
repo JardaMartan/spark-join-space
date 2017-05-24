@@ -33,7 +33,7 @@ Additionally there are following URLs:
 [ZODB](http://zodb.org) is used for data storage (access and refresh token). In order to achieve parallel access the application needs to access the storage via network uzing [ZEO](http://www.zodb.org/en/latest/articles/ZODB2.html). Before running the application script, start ZEO (for example under `screen`) using `runzeo -f join_space.fs -a 127.0.0.1:5090`.
 
 ### Create Spark Integration
-Login to [Spark Developer Site](http://developer.ciscospark.com) and under **My Apps** create two new integrations for example **Access Token Pass** for passing the identity of the user who will subscrine attendees to a space and **Join Space** for attendees. Set following parameters:
+Login to [Spark Developer Site](http://developer.ciscospark.com) and under [My Apps](https://developer.ciscospark.com/apps.html) create two new integrations. For example **Access Token Pass** and **Join Space**. **Access Token Pass** will be used for passing the identity of the user who will subscrine attendees to a space. **Join Space** will be used by attendees to join a space. Set following parameters:
 
 
 | Application | Redirect URI(s) | Scopes  |
@@ -43,6 +43,9 @@ Login to [Spark Developer Site](http://developer.ciscospark.com) and under **My 
 
 
 Copy the **Client ID** and **Client Secret** from both applications. You will need to paste them to `flask_bot.py`. Client Secret gets displayed only when you create the application but you can re-generate it later as well. Just don't forget that by re-generating you invalidate the previous secret.
+
+512x512 icon is a mandatory parameter, use this for example: http://logok.org/wp-content/uploads/2014/05/Cisco-logo-1024x768.png.
+
 
 ### Edit the flask_bot.py
 Get the room id to which you want to subscribe the attendees using https://developer.ciscospark.com/endpoint-rooms-get.html. Modify the `event_rooms` variable in `flask_bot.py` accordingly. Paste the Client ID and Client Secret from **Access Token Pass** to `on_behalf_client_id` and `on_behalf_client_secret` variables in `flask_bot.py`. Paste the Client ID and Client Secret from **Join Space** to `join_client_id` and `join_client_secret` in `flask_bot.py`.
