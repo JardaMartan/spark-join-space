@@ -109,6 +109,9 @@ def get_event_db(event_name):
     
     return getattr(zodb_root, event_name)
 
+#
+# get information about myself (the user) and store it in db if needed
+#
 def get_me(event_name):
     event_db = get_event_db(event_name)
     if event_db["me"] is None:
@@ -117,12 +120,19 @@ def get_me(event_name):
     
     return event_db["me"]
 
+#
+# update information about myself in the db
+#
 def set_me(event_name, access_token):
     event_db = get_event_db(event_name)
     auth = "Bearer " + access_token
     event_db["me"] = spark_client.get_me(auth)
     transaction.commit()
 
+#
+# renew access token using refresh token
+# can be used in automated process
+#
 def renew_auth_token(event_name):
     token_db = get_event_db(event_name)["tokens"]
     owner_token_data = token_db[0]
@@ -153,7 +163,10 @@ def auth_token(event_name):
         owner_token_data = token_db[0]
         
         return "Bearer " + owner_token_data.access_token
-    
+
+#
+# sample webhook code for handling Spark space events (e.g. new message)
+#    
 @app.route("/webhook/<event_name>", methods=["POST"])
 def webhook(event_name):
     # Get the json data
@@ -192,6 +205,9 @@ def webhook(event_name):
 
     return ""
 
+#
+# generate redirect to Spark authentication to gather the on_behalf user data
+#
 @app.route("/owner-auth-redirect/<event_name>")
 def owner_auth_redirect(event_name):
     if event_name not in cfg.event_rooms.keys():
@@ -209,6 +225,10 @@ def owner_auth_redirect(event_name):
 
     return redirect(owner_url)
 
+#
+# get the on_behalf user data - generate access and refresh tokens
+# "state" contains event name passed from /owner-auth-redirect
+#
 @app.route("/owner-auth")
 def owner_auth():
     input_code = request.args.get("code")
@@ -239,6 +259,9 @@ def owner_auth():
 
     return (render_template("token-info.html", **context))
 
+#
+# renew access (and refresh if needed) token using refresh token
+#
 @app.route("/token-renew/<event_name>")
 def token_renew(event_name):
     token_db = get_event_db(event_name)["tokens"]
@@ -253,6 +276,9 @@ def token_renew(event_name):
 
     return (render_template("token-info.html", **context))
 
+#
+# generate a redirect to Spark authentication to gather the attendee data
+#
 @app.route("/join-redirect/<event_name>", methods=["GET"])
 def join_redirect(event_name):
     if event_name not in cfg.event_rooms.keys():
@@ -270,6 +296,9 @@ def join_redirect(event_name):
 
     return redirect(join_url)
 
+#
+# get the attendee information and subscribe him to the event space
+#
 @app.route("/join", methods=["GET"])
 def join():
     input_code = request.args.get("code")
