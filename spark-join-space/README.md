@@ -34,10 +34,13 @@ Additionally there are following URLs:
 
 ### Create Spark Integration
 Login to [Spark Developer Site](http://developer.ciscospark.com) and under **My Apps** create two new integrations for example **Access Token Pass** for passing the identity of the user who will subscrine attendees to a space and **Join Space** for attendees. Set following parameters:
+
+
 | Application | Redirect URI(s) | Scopes  |
 | --- | --- | --- |
 | Access Token Pass | http://<your_server>:5000/owner-auth | spark:people\_read spark:rooms\_read spark:memberships_write |
 | Join Space | http://<your_server>:5000/join | spark:people\_read |
+
 
 Copy the **Client ID** and **Client Secret** from both applications. You will need to paste them to `flask_bot.py`. Client Secret gets displayed only when you create the application but you can re-generate it later as well. Just don't forget that by re-generating you invalidate the previous secret.
 
